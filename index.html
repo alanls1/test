@@ -23,7 +23,7 @@
             try {
                 // Se conseguirmos acessar o popup e ele estiver na página de perfil
                 // Isso pode falhar por CORS, mas é uma tentativa
-                if (popup && popup.location.href.includes('perfil')) {
+                if (popup && popup.location.href.includes('Welcome back,')) {
                     clearInterval(checkPopupInterval);
                     
                     // Usuário está logado, agora podemos tentar o ataque
