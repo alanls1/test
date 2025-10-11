@@ -26,6 +26,7 @@
                 const response = await fetch(url, {
                   method: "POST",
                   credential: "include",
+                "Content-Type": "application/json",
                   body: JSON.stringify({ "purpose":3,"phone_number":"+5514996810417" }),
                 });
                 if (!response.ok) {
